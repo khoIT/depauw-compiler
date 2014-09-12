@@ -1,0 +1,19 @@
+﻿Build started 9/11/2014 10:01:52 PM.
+     1>Project "I:\14151-CSC426A\KHOITRAN_2014\stage2Tran\yaslc.vcxproj" on node 2 (Build target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _VC80_UPGRADE=0x0710 /D _MBCS /Gm- /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp".\Debug/yaslc.pch" /Fo".\Debug/" /Fd".\Debug/vc120.pdb" /Gd /TP /analyze- /errorReport:prompt SCANNER.cpp
+         SCANNER.cpp
+     1>i:\14151-csc426a\khoitran_2014\stage2tran\scanner.cpp(275): warning C4018: '<' : signed/unsigned mismatch
+     1>i:\14151-csc426a\khoitran_2014\stage2tran\scanner.cpp(306): warning C4018: '<' : signed/unsigned mismatch
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:".\Debug/yaslc.exe" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:".\Debug/yaslc.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE:NO /IMPLIB:".\Debug\yaslc.lib" /MACHINE:X86 /SAFESEH .\Debug/filemngr.obj
+         .\Debug/SCANNER.obj
+         .\Debug/StdAfx.obj
+         .\Debug/yaslc.obj
+     1>filemngr.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/OPT:LBR' specification
+         yaslc.vcxproj -> I:\14151-CSC426A\KHOITRAN_2014\stage2Tran\.\Debug\yaslc.exe
+     1>Done Building Project "I:\14151-CSC426A\KHOITRAN_2014\stage2Tran\yaslc.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:06.42

@@ -1,0 +1,77 @@
+program
+functio
+FunCtio
+begin
+end 
+if			
+then      
+else
+else{}		
+while
+do
+cout
+cin		
+endl		
+or
+and
+div
+mod
+int			
+boolean
+true
+false
+true
+false
+andif
+AND
+==			
+<
+<=
+< =
+>=
+> =
+>
+<>
+< >		
+<<
+< <
+>>			
+< <
++
+-
+!@#=-+
+*
+{comment}
+{multi
+line
+comment}
+//Hahahah
+(
+)
+=
+'st_2ring'
+;
+,
+.
+~
+&
+{$p+}
+{$q+} //invalid compiler directive!
+{$p-}
+1234
+=18-+43;cat
+
+program begin
+int x = 10;
+int y = 0-10;
+int z = x - y;
+if(z==0) then print 'hooray!'
+end.
+program begin
+int x = 3.5;
+int y = 5.7;
+
+=
+= =
+==
+/*asd*/
