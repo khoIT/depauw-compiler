@@ -1,13 +1,12 @@
-program
-functio
-FunCtio
+prOgrAM
+FunCtion
 begin
 end 
 if			
 then      
 else
-else{}		
-while
+while{}
+whi le
 do
 cout
 cin		
@@ -20,14 +19,12 @@ int
 boolean
 true
 false
-true
-false
-andif
-AND
-==			
+==
 <
 <=
 < =
+>=
+++
 >=
 > =
 >
@@ -39,28 +36,32 @@ AND
 < <
 +
 -
-!@#=-+
 *
+{}
+&
+()
+)(
+(
+)
+{$p+}
+{$q+} //invalid compiler directive!
+{$p-}
+!@#=-+
+**
 {comment}
 {multi
 line
 comment}
 //Hahahah
-(
-)
 =
 'st_2ring'
 ;
 ,
 .
 ~
-&
-{$p+}
-{$q+} //invalid compiler directive!
-{$p-}
+
 1234
 =18-+43;cat
-
 program begin
 int x = 10;
 int y = 0-10;
@@ -70,8 +71,6 @@ end.
 program begin
 int x = 3.5;
 int y = 5.7;
-
 =
 = =
 ==
-/*asd*/

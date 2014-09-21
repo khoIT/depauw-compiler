@@ -9,9 +9,6 @@
 const int MAXCELLSPERSTRING = 80;  
 
 //Below are constant used to represent token type/subtypes.
-#define EMPTY_T -1
-#define EMPTY_ST -2
-#define EMPTY_LEXEME ""
 
 #define ADDOP_T 10
 #define ADD_ST 11
@@ -57,10 +54,13 @@ const int MAXCELLSPERSTRING = 80;
 #define NONE_ST 121
 
 #define MAX_STATE 14
-#define MAX_CHAR 129//the last one is for EOF
+#define MAX_CHAR 129//128 ascii + EOF char
 #define EOF_INDEX 128//Index of EOF in the matrix
 
 #define ERROR_STATE -1
+#define EMPTY_T -2
+#define EMPTY_ST -3
+#define EMPTY_LEXEME ""
 
 enum Action {ACCEPT, ERROR, NOTHING, CLEAR_BUFFER, COMPILER_DIRECTIVE};
 

@@ -1,5 +1,5 @@
 //Khoi Tran, Revised from Dave A. Berque Aug 2014
-//This file contains implementations of the 
+//This file contains implementations of the
 //Token, State and Scanner classes.
 
 
@@ -66,7 +66,7 @@ string TokenClass::tokenNumToString(int tokenNum)
 		return "INSERT_T";
 	case EXTRACT_T:
 		return "EXTRACT_T";
-	
+
 
 	case LEFTPARENTH_T:
 		return "LEFTPARENTH_T";
@@ -112,21 +112,22 @@ void TokenClass::display(){
 }
 
 //Impletment methods of State class
-
 //Default state error: unless indicated otherwise, all cells in the matrix should be in error state
-State::State():state(ERROR_STATE), action(NOTHING), token(NULL), actionInfo(NULL), pushBack(false){}
+State::State():state(ERROR_STATE), action(NOTHING), actionInfo(NULL), token(NULL), pushBack(false){}
 
-//Non-final state, add the char to the lexeme and move on
-State::State(int state, bool pushBack = false) : state(state), action(NOTHING), token(NULL), actionInfo(NULL), pushBack(pushBack){}
-
-//Accept state or final state
-State::State(bool pushBack, int type, int subtype, string lexeme):state(0), pushBack(pushBack), token(new TokenClass(type,subtype,lexeme)), action(ACCEPT), actionInfo(NULL){}
-
-//Error state
-State::State(string errorMessage):state(0), action(ERROR), pushBack(false), token(NULL), actionInfo(new string(errorMessage)){}
+//Add the char to the lexeme and push back
+State::State(int state, bool pushBack = false): state(state),  pushBack(pushBack), action(action), actionInfo(NULL), token(NULL){}
 
 //Everything else state
-State::State(int state, Action action):state(state), action(action), pushBack(false), token(NULL) , actionInfo(NULL){}
+State::State(int state, Action action):state(state), action(action), actionInfo(NULL), token(NULL), pushBack(false){}
+
+//Accept state or final state
+State::State(int type, int subtype, string lexeme, bool pushBack): state(0), token(new TokenClass(type,subtype,lexeme)), action(ACCEPT), actionInfo(NULL), pushBack(pushBack){}
+
+//Print error message state
+State::State(string errorMessage):state(0), action(ERROR), pushBack(false), token(NULL), actionInfo(new string(errorMessage)){}
+
+
 
 
 std::ostream& operator<<(std::ostream &stream, const State &state) {
@@ -139,7 +140,7 @@ std::ostream& operator<<(std::ostream &stream, const State &state) {
 
 //Impletment methods of Scanner class
 ScannerClass::ScannerClass(){
-	buildStateMatrix();
+	buildStateTable();
 }
 
 TokenClass ScannerClass::getToken(){
@@ -161,7 +162,7 @@ TokenClass ScannerClass::getToken(){
 			return TokenClass(EMPTY_T, EMPTY_ST, "Illegal symbol: " + chr);
 
 		//Then lookup in the matrix
-		State s = stateMatrix[state][chr];
+		State s = stateTable[state][chr];
 		if(s.state == ERROR_STATE)
 			return TokenClass(EMPTY_T, EMPTY_ST, "Invalid char sequence: " + (currentLexeme + (char)chr));
 
@@ -171,7 +172,7 @@ TokenClass ScannerClass::getToken(){
 		switch(s.action){
 		case NOTHING:
 			//In process or reading, just store the char
-			currentLexeme += chr; 
+			currentLexeme += chr;
 			break;
 
 		case ACCEPT:{
@@ -196,7 +197,7 @@ TokenClass ScannerClass::getToken(){
 						return TokenClass(EMPTY_T, EMPTY_ST, "Identifier can have at most twelve characters: " + currentLexeme);
 
 					const char* cString = currentLexeme.c_str();  //trim all unnecessary spaces
-					
+
 					if (_strcmpi("or", cString) == 0){
 						return TokenClass(ADDOP_T, OR_ST, currentLexeme);
 					}
@@ -218,7 +219,7 @@ TokenClass ScannerClass::getToken(){
 		case ERROR:{
 				if(s.actionInfo != NULL)
 					return TokenClass(EMPTY_T,EMPTY_ST,*s.actionInfo);
-				else 
+				else
 					//In case the error messag was forgotten.
 					return TokenClass(EMPTY_T,EMPTY_ST,"Error");
 			}
@@ -228,9 +229,10 @@ TokenClass ScannerClass::getToken(){
 		case COMPILER_DIRECTIVE:
 			currentLexeme += chr;
 			if(currentLexeme != "{$p+}" && currentLexeme != "{$p-}")
-				cout<<"Warning, compiler directive "+ currentLexeme +" is undefined."<<endl;
+				cout<<"Warning, compiler directive " + currentLexeme + " is undefined."<<endl;
 			break;
 		}
+
 
 		state = s.state;//ready for next char
 	}while(true);
@@ -239,142 +241,143 @@ TokenClass ScannerClass::getToken(){
 	return TokenClass(EMPTY_T,EMPTY_ST,EMPTY_LEXEME);
 }
 
-void ScannerClass::buildStateMatrix(){
-	//keeps track of the number of all states in compiler
-	int currentStateNum = 0; 
+void ScannerClass::buildStateTableMinimized(){
+	int currentStateNum = 0;
+	for (int i = 0; i<MAX_STATE; ++i)
+		for (int j = 0; j<MAX_CHAR; ++j)
+			//default all error states
+			ministateTable[i][j] = State();
+
+	//Read whitespace col = 0
+	stateTable[0][0] = State(0);
+
+	// Read *();+-,.~&
+	char special[13] = { '+', '(', ')', '+', '-', ',', '.', '~', ';', '&', '!', '@', '#' };
+	stateTable[0][1] = State(1);
+}
+
+void ScannerClass::buildStateTable(){
+
+	int currentStateNum = 0; //keeps track of the number of all states in compiler
 
 	for(int i = 0;i<MAX_STATE;++i)
 		for(int j = 0;j<MAX_CHAR;++j)
 			//default all error states
-			stateMatrix[i][j] = State();
+			stateTable[i][j] = State();
 
 	//Read CR and whitespace at state 0 lead to 0
 	char whitespaces[9] = {' ','\t','\n','\0','\a','\b','\f','\r','\v'};
 	for(int i = 0;i<9;++i)
-		stateMatrix[0][whitespaces[i]]=State(0);
-	stateMatrix[0][EOF_INDEX] = State(EOF_INDEX);
-
-	//Read *();+-,.~& and go to the respective final state
-	stateMatrix[0]['*'] = State(false,MULOP_T,MULTIPLY_ST,"*");
-	stateMatrix[0]['('] = State(false, LEFTPARENTH_T, NONE_ST, "(");
-	stateMatrix[0][')'] = State(false, RIGHTPARENTH_T, NONE_ST, ")");
-	stateMatrix[0]['+'] = State(false, ADDOP_T, ADD_ST, "+");
-	stateMatrix[0]['-'] = State(false,ADDOP_T,SUBSTRACT_ST,"-");
-	stateMatrix[0][','] = State(false, COMMA_T, NONE_ST, ",");
-	stateMatrix[0]['.'] = State(false,DOT_T,NONE_ST,".");
-	stateMatrix[0]['~'] = State(false,TILDE_T,NONE_ST,"~");
-	stateMatrix[0][';'] = State(false,SEMICOLON_T,NONE_ST,";");
-	stateMatrix[0]['&'] = State(false,AMPERSAND_T,NONE_ST,"&");
-	stateMatrix[0]['!'] = State(false, EXCLAIM_T, NONE_ST, "!");
-	stateMatrix[0]['@'] = State(false, ATSIGN_T, NONE_ST, "@");
-	stateMatrix[0]['#'] = State(false, POUND_T, NONE_ST, "#");
+		stateTable[0][whitespaces[i]]=State(0);
+	stateTable[0][EOF_INDEX] = State(EOF_INDEX);
 
 	//Read digit
-	int firstDigitState = ++currentStateNum;//current state is 4
+	int firstDigitState = ++currentStateNum;//current state is 1
 	string digits = "0123456789";
 	for (int i = 0; i<digits.length(); ++i)
 	{
-		stateMatrix[0][digits[i]] = State(firstDigitState);
+		stateTable[0][digits[i]] = State(firstDigitState);
 	}
 	for (int i = 0; i<MAX_CHAR; ++i)
 	{
 		if (i <= '9' && i >= '0')
 			//keep reading in the characters. not check for length here
-			stateMatrix[firstDigitState][i] = State(firstDigitState);
+			stateTable[firstDigitState][i] = State(firstDigitState);
 		else
-			stateMatrix[firstDigitState][i] = State(true, INTEGER_T, NONE_ST, "int_lexeme");
-	}
-
-	//Read string
-	int leftQuoteStateNum = ++currentStateNum;//State 5
-	stateMatrix[0]['\''] = State(leftQuoteStateNum);
-	for (int i = 0; i<MAX_CHAR; ++i)
-	{
-		if (i == '\'')
-			stateMatrix[leftQuoteStateNum][i] = State(false, STRING_T, NONE_ST, "string_lexeme");
-		else if (i == '\r' || i == '\n')
-			stateMatrix[leftQuoteStateNum][i] = State("String cannot be split across lines.");
-		else if (i == EOF_INDEX)
-			stateMatrix[leftQuoteStateNum][i] = State("Single quote expected at the end of string.");
-		else
-			stateMatrix[leftQuoteStateNum][i] = State(leftQuoteStateNum);
+			stateTable[firstDigitState][i] = State(INTEGER_T, NONE_ST, "int_lexeme", true);
 	}
 
 	//Read identifier
-	int firstLetterStateNum = ++currentStateNum;//State 8
+	int firstLetterStateNum = ++currentStateNum;//current state is 2
 	string letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 	for (int i = 0; i < letters.length(); ++i)
-		stateMatrix[0][letters[i]] = State(firstLetterStateNum);
+		stateTable[0][letters[i]] = State(firstLetterStateNum);
 	for (int i = 0; i<MAX_CHAR; ++i)
 	{
 		if (('A' <= i&&i <= 'z') || ('0' <= i&&i <= '9') || (i == '_'))
-			stateMatrix[firstLetterStateNum][i] = State(firstLetterStateNum);
+			stateTable[firstLetterStateNum][i] = State(firstLetterStateNum);
 		else
-			stateMatrix[firstLetterStateNum][i] = State(true, IDENT_T, NONE_ST, "identifier_lexeme");
+			stateTable[firstLetterStateNum][i] = State(IDENT_T, NONE_ST, "identifier_lexeme", true);
 	}
 
-	//Read "="
-	int firstEqualState = ++currentStateNum;//current state is 1;
-	stateMatrix[0]['='] = State(firstEqualState);//Read first equal
-	for(int i = 0;i<MAX_CHAR;++i)
+	//Read string
+	int leftQuoteStateNum = ++currentStateNum;//current state is 3
+	stateTable[0]['\''] = State(leftQuoteStateNum);
+	for (int i = 0; i<MAX_CHAR; ++i)
 	{
-		if(i == '=')
-			stateMatrix[firstEqualState]['=']=State(false,RELOP_T,EQUAL_ST,"==");
+		if (i == '\'')
+			stateTable[leftQuoteStateNum][i] = State(STRING_T, NONE_ST, "string_lexeme", false);
+		else if (i == '\r' || i == '\n')
+			stateTable[leftQuoteStateNum][i] = State("String cannot be split across lines.");
+		else if (i == EOF_INDEX)
+			stateTable[leftQuoteStateNum][i] = State("Single quote expected at the end of string.");
 		else
-			stateMatrix[firstEqualState][i] = State(true,ASSIGNMENT_T,NONE_ST,"=");
+			stateTable[leftQuoteStateNum][i] = State(leftQuoteStateNum);
+	}
+
+
+	//Read "="
+	int firstEqualState = ++currentStateNum;//current state is 4;
+	stateTable[0]['='] = State(firstEqualState);//Read first equal
+	for (int i = 0; i<MAX_CHAR; ++i)
+	{
+		if (i == '=')
+			stateTable[firstEqualState]['='] = State(RELOP_T, EQUAL_ST, "==", false);
+		else
+			stateTable[firstEqualState][i] = State(ASSIGNMENT_T, NONE_ST, "=", true);
 	}
 
 	//Read "<"
-	int lessThanState = ++currentStateNum;//State 2
-	stateMatrix[0]['<'] = State(lessThanState);
-	for(int i = 0;i<MAX_CHAR;++i)
+	int lessThanState = ++currentStateNum;//State 5
+	stateTable[0]['<'] = State(lessThanState);
+	for (int i = 0; i<MAX_CHAR; ++i)
 	{
-		if(i == '<' )
-			stateMatrix[lessThanState]['<'] = State(false, INSERT_T, NONE_ST,"<<");
-		else if(i=='>')
-			stateMatrix[lessThanState]['>'] = State(false, RELOP_T, NOTEQ_ST, "<>");
+		if (i == '<')
+			stateTable[lessThanState]['<'] = State(INSERT_T, NONE_ST, "<<", false);
+		else if (i == '>')
+			stateTable[lessThanState]['>'] = State(RELOP_T, NOTEQ_ST, "<>", false);
 		else if (i == '=')
-			stateMatrix[lessThanState]['='] = State(false, RELOP_T, LESSOREQUAL_ST, "<=");
+			stateTable[lessThanState]['='] = State(RELOP_T, LESSOREQUAL_ST, "<=", false);
 		else
-			stateMatrix[lessThanState][i] = State(true, RELOP_T, LESS_ST, "<");
+			stateTable[lessThanState][i] = State(RELOP_T, LESS_ST, "<", true);
 	}
 
 	//Read ">"
-	int firstThanState = ++currentStateNum;//State 3
-	stateMatrix[0]['>']=State(firstThanState);
-	for(int i = 0;i<MAX_CHAR;++i)
+	int firstThanState = ++currentStateNum;//State 6
+	stateTable[0]['>'] = State(firstThanState);
+	for (int i = 0; i<MAX_CHAR; ++i)
 	{
-		if(i == '>')
-			stateMatrix[firstThanState]['>'] = State(false, EXTRACT_T, NONE_ST, ">>");
+		if (i == '>')
+			stateTable[firstThanState]['>'] = State(EXTRACT_T, NONE_ST, ">>", false);
 		else if (i == '=')
-			stateMatrix[firstThanState]['='] = State(false, RELOP_T, GREATEROREQUAL_ST, ">=");
+			stateTable[firstThanState]['='] = State(RELOP_T, GREATEROREQUAL_ST, ">=", false);
 		else if (i == '=')
-			stateMatrix[firstThanState][i] = State(true, RELOP_T, GREATER_ST, ">");
-		else 
-			stateMatrix[firstThanState][i] = State(true, RELOP_T, SWAP_ST, "><");
+			stateTable[firstThanState][i] = State(RELOP_T, GREATER_ST, ">", true);
+		else
+			stateTable[firstThanState][i] = State(RELOP_T, SWAP_ST, "><", true);
 	}
 
 	//Read double slash started comment
-	int openStringState = ++currentStateNum;//current state is 6
-	int closeStringState = ++currentStateNum;//current is 7
-	stateMatrix[0]['/'] = State(openStringState);
+	int openStringState = ++currentStateNum;//current state 7
+	int closeStringState = ++currentStateNum;
+	stateTable[0]['/'] = State(openStringState);
 	for(int i = 0;i<MAX_CHAR;++i){
 		if(i == '/')
-			stateMatrix[openStringState][i] = State(closeStringState);
-		else 
-			stateMatrix[openStringState][i] = State("Comment should start with //.");
+			stateTable[openStringState][i] = State(closeStringState);
+		else
+			stateTable[openStringState][i] = State("Comment should start with //.");
 	}
 
 	//Read new line
 	for (int i = 0; i<MAX_CHAR; i++){
 		if (i == '\r' || i == '\n')
 			//if newline in the middle of string, ignore the lexemes
-			stateMatrix[closeStringState][i] = State(0);
+			stateTable[closeStringState][i] = State(0);
 		else if (i == EOF_INDEX)
 			//if reach eof in the middle of string, push back the lexemes
-			stateMatrix[closeStringState][i] = State(0, true);
+			stateTable[closeStringState][i] = State(0, true);
 		else
-			stateMatrix[closeStringState][i] = State(closeStringState, CLEAR_BUFFER);
+			stateTable[closeStringState][i] = State(closeStringState, CLEAR_BUFFER);
 	}
 
 	//Read comment enclosed in brace
@@ -383,67 +386,96 @@ void ScannerClass::buildStateMatrix(){
 	int thirdDirectiveState = ++currentStateNum;
 	int fourthDirectiveState = ++currentStateNum;
 	int rightBraceState = ++currentStateNum;
-	stateMatrix[0]['{'] = State(leftBraceState);
+	stateTable[0]['{'] = State(leftBraceState);
 	for(int i = 0;i<MAX_CHAR;++i)
 	{
 		if(i == '}')
 			//empty: ignore chars
-			stateMatrix[leftBraceState][i] = State(0);
+			stateTable[leftBraceState][i] = State(0);
 		else if(i == '$')
-			stateMatrix[leftBraceState][i] = State(secondDirectiveState);
+			stateTable[leftBraceState][i] = State(secondDirectiveState);
 		else if(i == EOF_INDEX)
-			stateMatrix[leftBraceState][i] = State("Missing } for Comment or compiler directives.");
-		else 
-			stateMatrix[leftBraceState][i] = State(rightBraceState);
+			stateTable[leftBraceState][i] = State("Missing } for Comment or compiler directives.");
+		else
+			stateTable[leftBraceState][i] = State(rightBraceState);
 
 		//comment or directive case
 		if(i == '}')
-			stateMatrix[secondDirectiveState][i] = State(0);
+			stateTable[secondDirectiveState][i] = State(0);
 		else if (i <= 'z' && i >= 'A')
-			stateMatrix[secondDirectiveState][i] = State(thirdDirectiveState);
+			stateTable[secondDirectiveState][i] = State(thirdDirectiveState);
 		else if (i == EOF_INDEX)
-			stateMatrix[secondDirectiveState][i] = State("Missing } for Comment or compiler directives.");
+			stateTable[secondDirectiveState][i] = State("Missing } for Comment or compiler directives.");
 		else
-			stateMatrix[secondDirectiveState][i] = State(rightBraceState);
+			stateTable[secondDirectiveState][i] = State(rightBraceState);
 
 		//directive
 		if(i == '}')
-			stateMatrix[thirdDirectiveState][i] = State(0);
+			stateTable[thirdDirectiveState][i] = State(0);
 		else if(i == '+' ||i == '-')
-			stateMatrix[thirdDirectiveState][i] = State(fourthDirectiveState);
+			stateTable[thirdDirectiveState][i] = State(fourthDirectiveState);
 		else if (i == EOF_INDEX)
-			stateMatrix[thirdDirectiveState][i] = State("Missing } for Comment or compiler directives.");
-		else 
-			stateMatrix[thirdDirectiveState][i] = State(rightBraceState);
+			stateTable[thirdDirectiveState][i] = State("Missing } for Comment or compiler directives.");
+		else
+			stateTable[thirdDirectiveState][i] = State(rightBraceState);
 
 		//directive 4th letter
 		if(i == '}')
-			stateMatrix[fourthDirectiveState][i] = State(0,COMPILER_DIRECTIVE);
+			stateTable[fourthDirectiveState][i] = State(0, COMPILER_DIRECTIVE);
 		else if(i == EOF_INDEX)
-			stateMatrix[fourthDirectiveState][i] = State("Missing } for Comment or compiler directives.");
-		else stateMatrix[fourthDirectiveState][i] =State(rightBraceState);
+			stateTable[fourthDirectiveState][i] = State("Missing } for Comment or compiler directives.");
+		else stateTable[fourthDirectiveState][i] =State(rightBraceState);
 
 		if(i == '}')
-			stateMatrix[rightBraceState][i] = State(0);
+			stateTable[rightBraceState][i] = State(0);
 		else if(i == EOF_INDEX)
-			stateMatrix[rightBraceState][i] = State("Missing } for Comment or compiler directives.");
+			stateTable[rightBraceState][i] = State("Missing } for Comment or compiler directives.");
 		else
 			//we ignore comments so no need to store them anyway
-			stateMatrix[rightBraceState][i] = State(rightBraceState, CLEAR_BUFFER);
+			stateTable[rightBraceState][i] = State(rightBraceState, CLEAR_BUFFER);
 	}
+
+	//Read arithmetic operator and go to the respective final state
+	stateTable[0]['*'] = State(MULOP_T, MULTIPLY_ST, "*", false);
+	stateTable[0]['('] = State(LEFTPARENTH_T, NONE_ST, "(", false);
+	stateTable[0][')'] = State(RIGHTPARENTH_T, NONE_ST, ")", false);
+	stateTable[0]['+'] = State(ADDOP_T, ADD_ST, "+", false);
+	stateTable[0]['-'] = State(ADDOP_T, SUBSTRACT_ST, "-", false);
+	stateTable[0][','] = State(COMMA_T, NONE_ST, ",", false);
+	stateTable[0]['.'] = State(DOT_T, NONE_ST, ".", false);
+	stateTable[0]['~'] = State(TILDE_T, NONE_ST, "~", false);
+	stateTable[0][';'] = State(SEMICOLON_T, NONE_ST, ";", false);
+	stateTable[0]['&'] = State(AMPERSAND_T, NONE_ST, "&", false);
+	stateTable[0]['!'] = State(EXCLAIM_T, NONE_ST, "!", false);
+	stateTable[0]['@'] = State(ATSIGN_T, NONE_ST, "@", false);
+	stateTable[0]['#'] = State(POUND_T, NONE_ST, "#", false);
 }
 
-void ScannerClass::printStateMatrix()
+void ScannerClass::printStateTable()
 {
 	ofstream myfile;
-	myfile.open ("stateMatrix.csv");
+	myfile.open ("stateTable.csv");
 
 	for (int i = 0; i < MAX_STATE; i++)
 	{
 		for (int j = 0; j < MAX_CHAR; j++){
-		myfile << stateMatrix[i][j] << ",";
+		myfile << stateTable[i][j] << ",";
 		}
 		myfile<<"\n";
+	}
+	myfile.close();
+}
+
+void ScannerClass::printminiStateTable()
+{
+	ofstream myfile;
+	myfile.open("miniStateTable.csv");
+
+	for (int i = 0; i < MAX_STATE; i++){
+		for (int j = 0; j < MAX_CHAR; j++){
+			myfile << ministateTable[i][j] << ",";
+		}
+		myfile << "\n";
 	}
 	myfile.close();
 }
@@ -460,7 +492,7 @@ void ScannerClass::close()
 	for(int i = 0;i<MAX_STATE;i++)
 		for(int j = 0;j<MAX_CHAR;j++)
 		{
-			delete stateMatrix[i][j].actionInfo;
-			delete stateMatrix[i][j].token;
+			delete stateTable[i][j].actionInfo;
+			delete stateTable[i][j].token;
 		}
 }

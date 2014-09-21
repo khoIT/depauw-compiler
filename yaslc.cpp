@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 		cout<<"Compilation error at line "<<scanner.getCurrentLine()<<". ";
 
 	cout<<token.lexeme<<endl;
-	scanner.printStateMatrix();
+	scanner.printStateTable();
 	scanner.close();
 	cin.get();
 

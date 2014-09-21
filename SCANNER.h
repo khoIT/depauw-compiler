@@ -23,25 +23,27 @@ public:
 	void display();
 };
 
-//Define state object to be used to construct matrix of states
-//Store the action to be taken upon reading a new character.
+//Define state object to be used to construct table of states
 //State is the soul of this software because everytime compiler
 //reads a new character, it is going to store a new state, at which
-//appropriate action, message, or moving to next state ought to 
-//be executed.  It is the spine of the compiler
+//appropriate action, message, and next state ought to 
+//be determined. The getToken() will later read info from this table
 class State{
 public:
-	State();
+	State(); //initial state
 	State(int state, bool pushBack); 
-	State(bool pushBack, int type, int subtype, string lexeme); 
-	State(string errorMessage); //lexical error
 	State(int state, Action everythingelse);
+	State(int type, int subtype, string lexeme, bool pushBack);
+	State(string errorMessage); //lexical error
+	
 	friend ostream& operator<<(std::ostream& os, const State& stream); //to cout to matrix file
 	int state;
 	Action action;
-	bool pushBack;
 	string *actionInfo;
 	TokenClass *token;
+	bool pushBack;
+	
+	
 };
 
 
@@ -50,14 +52,16 @@ public:
 	ScannerClass();
 	TokenClass getToken();
 	void close();
-	void printStateMatrix();
+	void printStateTable();
+	void printminiStateTable();
 	int getCurrentLine();
 
 private:
-	State stateMatrix[MAX_STATE][MAX_CHAR];
+	State stateTable[MAX_STATE][MAX_CHAR];
+	State ministateTable[MAX_STATE][MAX_CHAR];
 	fileManagerClass fileManager;
-	void buildStateMatrix();
-}  ;
-
+	void buildStateTable();
+	void buildStateTableMinimized();
+};
 
 #endif
