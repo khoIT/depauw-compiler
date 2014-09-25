@@ -1,0 +1,3 @@
+>= different than > =
+{$ this is $p+ just a comment not a directive}
+while=1232;
